@@ -16,6 +16,7 @@ This entire project (and the libraries it uses) are licensed under the LGPL. Ple
 6. Click "Start". To stop the process at any time, click "Cancel" (this button will show up after you click start).
 7. Wait for the drive to finish getting created (normally takes under 20 minutes).
 8. Click "Quit" (this button will show up after the drive is done being created).
+
 Congrats! Your drive should have been created. 
 If you got an error message, please send me a message with the contact info below.
 
