@@ -29,6 +29,7 @@ private slots:
     void on_debian_clicked();
     void on_openFile_clicked();
     void on_startStop_clicked();
+    void autoScroll();
 };
 
 #endif // MAINWINDOW_H

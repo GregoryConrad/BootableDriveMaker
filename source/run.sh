@@ -1,36 +1,67 @@
 #!/bin/sh
 
+#################
+# Set Variables #
+#################
 copyFile=`cat path.txt`
 devID=`cat devID.txt`
 
-echo "Working..." > currStep.txt
-echo "Copying File To Needed Location..." > cmdOut.txt
-if ! cp "$copyFile" "file.iso"
+#############
+# Copy File #
+#############
+echo "Copying..." > currStep.txt
+echo "Copying File To Needed Location..." >> cmdOut.txt 2>&1
+cp "$copyFile" "file.iso"
+if [ "$?" != "0" ]
 then
+	exitValue=$?
 	echo "ERROR: Copy Failed. File does not exist?" > currStep.txt
-	exit 1
+	echo "ERROR: Copy Failed. File does not exist?" >> cmdOut.txt 2>&1
+	exit $?
 fi
 
+##################
+# Convert To IMG #
+##################
 echo "Converting..." > currStep.txt
-if ! hdiutil convert -format UDRW -o "file.img.dmg" "file.iso" &> cmdOut.txt
+echo "Converting The ISO To IMG..." >> cmdOut.txt 2>&1
+hdiutil convert -format UDRW -o "file.img.dmg" "file.iso" >> cmdOut.txt 2>&1
+if [ "$?" != "0" ]
 then
+	exitValue=$?
 	echo "ERROR: Conversion Failed. Invalid ISO?" > currStep.txt
-	exit 1
+	echo "ERROR: Conversion Failed. Invalid ISO?" >> cmdOut.txt 2>&1
+	exit $?
 fi
 
+################
+# Unmount Disk #
+################
 echo "Unmounting..." > currStep.txt
-if ! diskutil unmountDisk "$devID" &> cmdOut.txt
+echo "Unmounting The Disk..." >> cmdOut.txt 2>&1
+diskutil unmountDisk "$devID" >> cmdOut.txt 2>&1
+if [ "$?" != "0" ]
 then
+	exitValue=$?
 	echo "ERROR: Unmount Failed. Device Present?" > currStep.txt
-	exit 1
+	echo "ERROR: Unmount Failed. Device Present?" >> cmdOut.txt 2>&1
+	exit $?
 fi
 
-echo "Creating Drive (This May Take A Long Time)..." > currStep.txt
-if sudo dd if="file.img.dmg" of="$devID" bs=4m &> cmdOut.txt
+
+################
+# Create Drive #
+################
+echo "Creating Drive..." > currStep.txt
+echo "Creating The Bootable Drive (This May Take A Long Time)..." >> cmdOut.txt 2>&1
+sudo dd if="file.img.dmg" of="$devID" bs=4m >> cmdOut.txt 2>&1
+if [ "$?" == "0" ]
 then
 	echo "Success!" > currStep.txt
 	exit 0
 else
+	exitValue=$?
 	echo "ERROR: DD Failed. Device Removed?" > currStep.txt
-	exit 1
+	echo "ERROR: DD Failed. Device Removed?" >> cmdOut.txt 2>&1
+	exit $?
 fi

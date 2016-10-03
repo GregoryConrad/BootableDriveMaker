@@ -14,6 +14,7 @@ public:
 signals:
     void setLineLog(QString);
     void setBigLog(QString);
+    void autoScroll();
 public slots:
     void done(int,QProcess::ExitStatus);
 };

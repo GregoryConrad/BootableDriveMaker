@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     guihandler = new guiHandler();
     connect(guihandler,SIGNAL(setLineLog(QString)),this,SLOT(setLineLog(QString)));
     connect(guihandler,SIGNAL(setBigLog(QString)),this,SLOT(setBigLog(QString)));
+    connect(guihandler,SIGNAL(autoScroll()),this,SLOT(autoScroll()));
     connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),guihandler,SLOT(done(int,QProcess::ExitStatus)));
     isoPath = "";
 }
@@ -39,6 +40,7 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
         ui->plainTextEdit->appendPlainText("\n\nAn Error Has Occured. Error Code: " + QString::number(exitCode));
     }
     else {
+        ui->log->setText("Process Finished.");
         ui->plainTextEdit->appendPlainText("\n\nProcess Finished.");
     }
 }
@@ -86,4 +88,9 @@ void MainWindow::on_startStop_clicked() {
 
     process->start("osascript", QStringList() << "-e" << "do shell script \"sh run.sh\" with administrator privileges");
     guihandler->start();
+}
+void MainWindow::autoScroll() {
+    QTextCursor c = ui->plainTextEdit->textCursor();
+    c.movePosition(QTextCursor::End);
+    ui->plainTextEdit->setTextCursor(c);
 }

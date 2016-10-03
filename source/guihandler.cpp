@@ -15,10 +15,15 @@ void guiHandler::run() {
         //Update biglog
         QFile biglog("cmdOut.txt");
         if (biglog.open(QIODevice::ReadOnly)) {
-           content = QTextStream(&biglog).readLine();
-           biglog.close();
-           emit setBigLog(content);
+            content = "";
+            QTextStream in(&biglog);
+            while(!in.atEnd()) {
+                content += "\n" + in.readLine();
+            }
+            biglog.close();
+            emit setBigLog(content);
         }
+        emit autoScroll();
         msleep(200);
     }
 }
