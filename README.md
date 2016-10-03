@@ -5,6 +5,7 @@ This application was created to make a more user-friendly version of the shell-s
 
 # Copyright
 Copyright 2016 ETCG
+
 This entire project (and the libraries it uses) are licensed under the LGPL. Please read COPYING and COPYING.LESSER for your rights.
 
 # Usage
