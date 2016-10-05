@@ -3,15 +3,16 @@
 #################
 # Set Variables #
 #################
-copyFile=`cat path.txt`
 devID=`cat devID.txt`
+copyFile=`cat path.txt`
+fileExt=${copyFile##*.}
 
 #############
 # Copy File #
 #############
 echo "Copying..." > currStep.txt
 echo "Copying File To Needed Location..." >> cmdOut.txt 2>&1
-cp "$copyFile" "file.iso"
+cp "$copyFile" "file.$fileExt"
 if [ "$?" != "0" ]
 then
 	exitValue=$?
@@ -23,6 +24,8 @@ fi
 ##################
 # Convert To IMG #
 ##################
+if [ "$fileExt" == "iso" ]
+then
 echo "Converting..." > currStep.txt
 echo "Converting The ISO To IMG..." >> cmdOut.txt 2>&1
 hdiutil convert -format UDRW -o "file.img.dmg" "file.iso" >> cmdOut.txt 2>&1
@@ -32,6 +35,7 @@ then
 	echo "ERROR: Conversion Failed. Invalid ISO?" > currStep.txt
 	echo "ERROR: Conversion Failed. Invalid ISO?" >> cmdOut.txt 2>&1
 	exit $?
+fi
 fi
 
 ################

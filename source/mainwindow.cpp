@@ -19,7 +19,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(guihandler,SIGNAL(setBigLog(QString)),this,SLOT(setBigLog(QString)));
     connect(guihandler,SIGNAL(autoScroll()),this,SLOT(autoScroll()));
     connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),guihandler,SLOT(done(int,QProcess::ExitStatus)));
-    isoPath = "";
+    osPath = "";
+    on_refreshDevs_clicked();
+    QProcess removeFiles;
+    removeFiles.start("sh removeFiles.sh");
+    removeFiles.waitForFinished();
 }
 MainWindow::~MainWindow() {
     delete ui;
@@ -41,7 +45,7 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
     }
     else {
         ui->log->setText("Process Finished.");
-        ui->plainTextEdit->appendPlainText("\n\nProcess Finished.");
+        ui->plainTextEdit->appendPlainText("\nProcess Finished.");
     }
 }
 void MainWindow::on_ubuntu_clicked() {
@@ -54,13 +58,29 @@ void MainWindow::on_debian_clicked() {
         ui->plainTextEdit->appendPlainText("Failed To Open URL.");
     }
 }
-void MainWindow::on_openFile_clicked() {
-    isoPath = QFileDialog::getOpenFileName(this,tr("Select An Operating System (ISO)"),"/Users/","ISO (*.iso)");
-    ui->pathReadOut->setText(isoPath);
+void MainWindow::on_openISO_clicked() {
+    QProcess getUsername;
+    getUsername.start("sh findUsername.sh");
+    getUsername.waitForFinished();
+    QFile file("username.txt");
+    file.open(QIODevice::ReadOnly);
+    QTextStream in(&file);
+    osPath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","ISO (*.iso)");
+    ui->pathReadOut->setText(osPath);
+}
+void MainWindow::on_openIMG_clicked() {
+    QProcess getUsername;
+    getUsername.start("sh findUsername.sh");
+    getUsername.waitForFinished();
+    QFile file("username.txt");
+    file.open(QIODevice::ReadOnly);
+    QTextStream in(&file);
+    osPath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","IMG (*.img)");
+    ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_startStop_clicked() {
-    if (isoPath == "") {
-        ui->plainTextEdit->appendPlainText("You need to select an ISO file first.");
+    if (osPath == "") {
+        ui->plainTextEdit->appendPlainText("You need to select a file first.");
         return;
     }
     if (hasStarted) {
@@ -70,20 +90,22 @@ void MainWindow::on_startStop_clicked() {
     hasStarted = true;
     ui->log->setText("Starting...");
     ui->startStop->setText("Cancel");
-    ui->deviceID->setReadOnly(true);
-    ui->openFile->setEnabled(false);
+    ui->devID->setEnabled(false);
+    ui->openISO->setEnabled(false);
+    ui->openIMG->setEnabled(false);
     ui->ubuntu->setEnabled(false);
     ui->debian->setEnabled(false);
+    ui->refreshDevs->setEnabled(false);
 
-    //Print isoPath to path.txt
+    //Print osPath to path.txt
     QFile location("path.txt");
     location.open(QIODevice::WriteOnly);
-    QTextStream(&location) << isoPath;
+    QTextStream(&location) << osPath;
     location.close();
-    //Print "/dev/rdisk" + ui->deviceID->value() to devID.txt
+    //Print rdisk device to devID.txt
     QFile dev("devID.txt");
     dev.open(QIODevice::WriteOnly);
-    QTextStream(&dev) <<"/dev/rdisk" << ui->deviceID->value();
+    QTextStream(&dev) << "/dev/rdisk" << devIDToInt();
     dev.close();
 
     process->start("osascript", QStringList() << "-e" << "do shell script \"sh run.sh\" with administrator privileges");
@@ -93,4 +115,46 @@ void MainWindow::autoScroll() {
     QTextCursor c = ui->plainTextEdit->textCursor();
     c.movePosition(QTextCursor::End);
     ui->plainTextEdit->setTextCursor(c);
+}
+void MainWindow::on_refreshDevs_clicked() {
+    QProcess getDevs;
+    getDevs.start("sh findDevs.sh");
+    getDevs.waitForFinished();
+    QFile file("connectedDevs.txt");
+    file.open(QIODevice::ReadOnly);
+    QTextStream in(&file);
+    QString allDevs = in.readAll(), currLine = "";
+    file.close();
+    QStringList devs;
+    for (int i = 0; i < allDevs.length(); ++i) {
+        QString c = allDevs.at(i);
+        if (c != ":") {
+            if (c != "\n") {
+                currLine += c;
+            }
+        }
+        else {
+            devs.append(currLine);
+            currLine = "";
+        }
+    }
+    ui->devID->clear();
+    ui->devID->addItems(devs);
+}
+QString MainWindow::devIDToInt() {
+    QString newStr = "";
+    for (int i = 0; i < ui->devID->currentText().length(); ++i) {
+        QString curr = ui->devID->currentText().at(i);
+        if (curr == "0") newStr += "0";
+        else if (curr == "1") newStr += curr;
+        else if (curr == "2") newStr += curr;
+        else if (curr == "3") newStr += curr;
+        else if (curr == "4") newStr += curr;
+        else if (curr == "5") newStr += curr;
+        else if (curr == "6") newStr += curr;
+        else if (curr == "7") newStr += curr;
+        else if (curr == "8") newStr += curr;
+        else if (curr == "9") newStr += curr;
+    }
+    return newStr;
 }
