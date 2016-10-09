@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>659</width>
-    <height>375</height>
+    <height>398</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,6 +19,12 @@
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <widget class="QLabel" name="label_2">
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
          <string>Download An Operating System:</string>
         </property>
@@ -189,7 +195,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>0</height>
+        <height>150</height>
        </size>
       </property>
       <property name="readOnly">
@@ -199,6 +205,55 @@
     </item>
    </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>659</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuActions">
+    <property name="title">
+     <string>Actions</string>
+    </property>
+    <addaction name="actionSelectISO"/>
+    <addaction name="actionSelectIMG"/>
+    <addaction name="actionREADME"/>
+    <addaction name="actionContact"/>
+    <addaction name="actionCopyright"/>
+   </widget>
+   <addaction name="menuActions"/>
+  </widget>
+  <action name="actionSelectISO">
+   <property name="text">
+    <string>Select An ISO</string>
+   </property>
+  </action>
+  <action name="actionSelectIMG">
+   <property name="text">
+    <string>Select An IMG</string>
+   </property>
+  </action>
+  <action name="actionContact">
+   <property name="text">
+    <string>Open Contact Info</string>
+   </property>
+   <property name="toolTip">
+    <string>Contact</string>
+   </property>
+  </action>
+  <action name="actionCopyright">
+   <property name="text">
+    <string>Open Copyright Info</string>
+   </property>
+  </action>
+  <action name="actionREADME">
+   <property name="text">
+    <string>Open README</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

@@ -33,6 +33,11 @@ private slots:
     void on_openIMG_clicked();
     void on_downloadOS_clicked();
     void on_allowNonExtern_clicked();
+    void on_actionSelectISO_triggered();
+    void on_actionSelectIMG_triggered();
+    void on_actionContact_triggered();
+    void on_actionCopyright_triggered();
+    void on_actionREADME_triggered();
 };
 
 #endif // MAINWINDOW_H

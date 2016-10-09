@@ -25,8 +25,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QStringList itemsToAdd;
     itemsToAdd << "1. Ubuntu 16.04 (64-Bit)";
     itemsToAdd << "2. Debian 8.6.0 (64-Bit, Internet Installer)";
-    //itemsToAdd << "3. Ubuntu 16.04 (32-Bit)";
-    //itemsToAdd << "4. Debian 8.6.0 (32-Bit, Internet Installer)";
+    itemsToAdd << "3. Ubuntu 16.04 (32-Bit)";
+    itemsToAdd << "4. Debian 8.6.0 (32-Bit, Internet Installer)";
     ui->osSelector->addItems(itemsToAdd);
 }
 MainWindow::~MainWindow() {
@@ -59,7 +59,8 @@ void MainWindow::on_openISO_clicked() {
     QFile file("username.txt");
     file.open(QIODevice::ReadOnly);
     QTextStream in(&file);
-    osPath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","ISO (*.iso)");
+    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","ISO (*.iso)");
+    if (filePath != "") osPath = filePath;
     ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_openIMG_clicked() {
@@ -69,7 +70,8 @@ void MainWindow::on_openIMG_clicked() {
     QFile file("username.txt");
     file.open(QIODevice::ReadOnly);
     QTextStream in(&file);
-    osPath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","IMG (*.img)");
+    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","IMG (*.img)");
+    if (filePath != "") osPath = filePath;
     ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_startStop_clicked() {
@@ -201,8 +203,97 @@ void MainWindow::on_downloadOS_clicked() {
         if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
+    case 3:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-i386.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
+    case 4:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/i386/iso-cd/debian-8.6.0-i386-netinst.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
     }
 }
 void MainWindow::on_allowNonExtern_clicked() {
     on_refreshDevs_clicked();
+}
+void MainWindow::on_actionSelectISO_triggered() { if(!hasStarted) on_openISO_clicked(); }
+void MainWindow::on_actionSelectIMG_triggered() { if(!hasStarted) on_openIMG_clicked(); }
+void MainWindow::on_actionContact_triggered() {
+    QMessageBox::about(this,"Contact","Email: contact@etcg.pw\nWebsite: http://www.etcg.pw");
+}
+void MainWindow::on_actionCopyright_triggered() {
+    QFile copyNotice("../Resources/copyrightNotice.txt"),
+          copy      ("../Resources/COPYING"),
+          copyLesser("../Resources/COPYING.LESSER");
+    if (copyNotice.open(QIODevice::ReadOnly) && copy.open(QIODevice::ReadOnly)
+        && copyLesser.open(QIODevice::ReadOnly)) {
+        QTextStream inCopyNotice(&copyNotice), inCopy(&copy), inCopyLesser(&copyLesser);
+        QDialog *dialog = new QDialog;
+        QLabel *lb1 = new QLabel, *lb2 = new QLabel, *lb3 = new QLabel;
+        lb1->setText("Copyright Notice:");
+        lb2->setText("GPL License:");
+        lb3->setText("LGPL License:");
+        QList<QPlainTextEdit*> textHolders;
+        for (int i = 0; i < 3; ++i) {
+            QString textToAdd = "";
+            switch (i) {
+            case 0:
+                textToAdd = inCopyNotice.readAll();
+                break;
+            case 1:
+                textToAdd = inCopy.readAll();
+                break;
+            case 2:
+                textToAdd = inCopyLesser.readAll();
+                break;
+            }
+            textHolders.append(new QPlainTextEdit);
+            textHolders.at(i)->appendPlainText(textToAdd);
+            textHolders.at(i)->setReadOnly(true);
+            QTextCursor cursor = textHolders.at(i)->textCursor();
+            cursor.movePosition(QTextCursor::Start);
+            textHolders.at(i)->setTextCursor(cursor);
+        }
+        QVBoxLayout *v1 = new QVBoxLayout, *v2 = new QVBoxLayout, *v3 = new QVBoxLayout;
+        v1->addWidget(lb1);
+        v1->addWidget(textHolders.at(0));
+        v2->addWidget(lb2);
+        v2->addWidget(textHolders.at(1));
+        v3->addWidget(lb3);
+        v3->addWidget(textHolders.at(2));
+        QHBoxLayout *hbox = new QHBoxLayout;
+        hbox->addLayout(v1);
+        hbox->addLayout(v2);
+        hbox->addLayout(v3);
+        dialog->setLayout(hbox);
+        dialog->setFixedSize(1100,600);
+        dialog->setWindowTitle("Copyright");
+        dialog->exec();
+        delete dialog;
+    }
+    else QMessageBox::about(this,"Failed To Open","Failed To Open One Or More Copyright Files.");
+}
+void MainWindow::on_actionREADME_triggered() {
+    QFile README("../Resources/README.md");
+    if (README.open(QIODevice::ReadOnly)) {
+        QTextStream in(&README);
+        //Make dialog
+        QDialog dialog;
+        //Make textHolder for dialog
+        QPlainTextEdit textHolder;
+        textHolder.appendPlainText(in.readAll());
+        textHolder.setReadOnly(true);
+        QTextCursor cursor = textHolder.textCursor();
+        cursor.movePosition(QTextCursor::Start);
+        textHolder.setTextCursor(cursor);
+        //Make textHolder take up all of dialog
+        QVBoxLayout layout;
+        layout.addWidget(&textHolder);
+        //Setup dialog
+        dialog.setLayout(&layout);
+        dialog.setFixedSize(500,500);
+        dialog.setWindowTitle("README");
+        dialog.exec();
+    }
+    else QMessageBox::about(this,"Failed To Open README","Failed To Open README.");
 }
