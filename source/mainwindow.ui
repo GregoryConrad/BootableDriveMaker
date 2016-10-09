@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>624</width>
+    <width>659</width>
     <height>375</height>
    </rect>
   </property>
@@ -20,21 +20,36 @@
       <item>
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Download A 64-Bit Operating System:</string>
+         <string>Download An Operating System:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="ubuntu">
-        <property name="text">
-         <string>Ubuntu 16.04</string>
+       <widget class="QComboBox" name="osSelector">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>0</height>
+         </size>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="debian">
+       <widget class="QPushButton" name="downloadOS">
+        <property name="minimumSize">
+         <size>
+          <width>110</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
-         <string>Debian 8.6.0 (Internet Installer)</string>
+         <string>Download</string>
         </property>
        </widget>
       </item>
@@ -130,6 +145,13 @@
         </property>
         <property name="text">
          <string> Refresh Device List</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="allowNonExtern">
+        <property name="text">
+         <string>Use Non-External Devices</string>
         </property>
        </widget>
       </item>

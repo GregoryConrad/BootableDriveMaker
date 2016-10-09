@@ -4,11 +4,9 @@
 #include <QTextStream>
 #include <QFileDialog>
 #include <QDesktopServices>
+#include <QMessageBox>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
-{
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     this->setWindowTitle("Bootable Drive Maker For Mac");
     hasStarted = false;
@@ -24,6 +22,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QProcess removeFiles;
     removeFiles.start("sh removeFiles.sh");
     removeFiles.waitForFinished();
+    QStringList itemsToAdd;
+    itemsToAdd << "1. Ubuntu 16.04 (64-Bit)";
+    itemsToAdd << "2. Debian 8.6.0 (64-Bit, Internet Installer)";
+    //itemsToAdd << "3. Ubuntu 16.04 (32-Bit)";
+    //itemsToAdd << "4. Debian 8.6.0 (32-Bit, Internet Installer)";
+    ui->osSelector->addItems(itemsToAdd);
 }
 MainWindow::~MainWindow() {
     delete ui;
@@ -48,16 +52,6 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
         ui->plainTextEdit->appendPlainText("\nProcess Finished.");
     }
 }
-void MainWindow::on_ubuntu_clicked() {
-    if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-amd64.iso")))) {
-        ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-    }
-}
-void MainWindow::on_debian_clicked() {
-    if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso")))) {
-        ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-    }
-}
 void MainWindow::on_openISO_clicked() {
     QProcess getUsername;
     getUsername.start("sh findUsername.sh");
@@ -79,13 +73,26 @@ void MainWindow::on_openIMG_clicked() {
     ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_startStop_clicked() {
+    if (hasStarted) {
+        close();
+        return;
+    }
+    if (ui->devID->currentText().split(":")[0] == "ERROR") {
+        ui->plainTextEdit->appendPlainText("Cannot Start. Please See Error Above.");
+        return;
+    }
+    if (ui->devID->currentText() == "No External Devices Found") {
+        ui->plainTextEdit->appendPlainText("Please Put A USB Drive Into The Computer Or Enable The Use Of Internal Drives And Refresh The Device List.");
+        return;
+    }
     if (osPath == "") {
         ui->plainTextEdit->appendPlainText("You need to select a file first.");
         return;
     }
-    if (hasStarted) {
-        close();
-        return;
+    if (ui->devID->currentText().contains("internal")) {
+        QMessageBox msgBox;
+        msgBox.setText("You have selected an internal device for use.\nTo abort, click cancel in the authorization prompt after closing this message.\nTo continue, just close this message.");
+        msgBox.exec();
     }
     hasStarted = true;
     ui->log->setText("Starting...");
@@ -93,9 +100,15 @@ void MainWindow::on_startStop_clicked() {
     ui->devID->setEnabled(false);
     ui->openISO->setEnabled(false);
     ui->openIMG->setEnabled(false);
-    ui->ubuntu->setEnabled(false);
-    ui->debian->setEnabled(false);
+    ui->downloadOS->setEnabled(false);
+    ui->osSelector->setEnabled(false);
+    ui->allowNonExtern->setEnabled(false);
     ui->refreshDevs->setEnabled(false);
+    ui->pathReadOut->setEnabled(false);
+    ui->label->setEnabled(false);
+    ui->label_2->setEnabled(false);
+    ui->label_3->setEnabled(false);
+    ui->label_4->setEnabled(false);
 
     //Print osPath to path.txt
     QFile location("path.txt");
@@ -125,6 +138,15 @@ void MainWindow::on_refreshDevs_clicked() {
     QTextStream in(&file);
     QString allDevs = in.readAll(), currLine = "";
     file.close();
+    if (allDevs.length() < 3) {
+        ui->plainTextEdit->clear();
+        ui->plainTextEdit->appendPlainText("\nCould Not Find Any Connected Devices.");
+        ui->plainTextEdit->appendPlainText("Either this application is not in /Applications (or directly in your Documents or Desktop folder) or something is seriously wrong.");
+        ui->plainTextEdit->appendPlainText("Cannot Continue. Please Correct This Problem And Try Again.");
+        ui->devID->clear();
+        ui->devID->addItem("ERROR: Could Not Find Devices. See Below.");
+        return;
+    }
     QStringList devs;
     for (int i = 0; i < allDevs.length(); ++i) {
         QString c = allDevs.at(i);
@@ -137,6 +159,17 @@ void MainWindow::on_refreshDevs_clicked() {
             devs.append(currLine);
             currLine = "";
         }
+    }
+    if (!ui->allowNonExtern->isChecked()) {
+        for (int i = 0; i < devs.length(); ++i) {
+            if (!devs.at(i).contains("external")) {
+                devs.removeAt(i);
+                --i;
+            }
+        }
+    }
+    if (!ui->allowNonExtern->isChecked() && devs.isEmpty()) {
+        devs << "No External Devices Found";
     }
     ui->devID->clear();
     ui->devID->addItems(devs);
@@ -157,4 +190,19 @@ QString MainWindow::devIDToInt() {
         else if (curr == "9") newStr += curr;
     }
     return newStr;
+}
+void MainWindow::on_downloadOS_clicked() {
+    switch(ui->osSelector->currentText().split(".")[0].toInt()) {
+    case 1:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-amd64.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
+    case 2:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
+    }
+}
+void MainWindow::on_allowNonExtern_clicked() {
+    on_refreshDevs_clicked();
 }

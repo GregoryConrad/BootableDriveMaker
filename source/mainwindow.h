@@ -26,13 +26,13 @@ private slots:
     void setLineLog(QString);
     void setBigLog(QString);
     void done(int,QProcess::ExitStatus);
-    void on_ubuntu_clicked();
-    void on_debian_clicked();
     void on_startStop_clicked();
     void autoScroll();
     void on_refreshDevs_clicked();
     void on_openISO_clicked();
     void on_openIMG_clicked();
+    void on_downloadOS_clicked();
+    void on_allowNonExtern_clicked();
 };
 
 #endif // MAINWINDOW_H
