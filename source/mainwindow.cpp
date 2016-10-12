@@ -18,9 +18,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(guihandler,SIGNAL(autoScroll()),this,SLOT(autoScroll()));
     connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),guihandler,SLOT(done(int,QProcess::ExitStatus)));
     osPath = "";
-    on_refreshDevs_clicked();
     QProcess removeFiles;
-    removeFiles.start("sh removeFiles.sh");
+    removeFiles.start("rm devID.txt currStep.txt cmdOut.txt path.txt file.iso file.img.dmg file.img");
     removeFiles.waitForFinished();
     QStringList itemsToAdd;
     itemsToAdd << "1. Ubuntu 16.04 (64-Bit)";
@@ -28,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     itemsToAdd << "3. Ubuntu 16.04 (32-Bit)";
     itemsToAdd << "4. Debian 8.6.0 (32-Bit, Internet Installer)";
     ui->osSelector->addItems(itemsToAdd);
+    on_refreshDevs_clicked();
 }
 MainWindow::~MainWindow() {
     delete ui;
@@ -46,6 +46,7 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
     ui->startStop->setText("Quit");
     if (exitCode != 0 || exitStatus != QProcess::NormalExit) {
         ui->plainTextEdit->appendPlainText("\n\nAn Error Has Occured. Error Code: " + QString::number(exitCode));
+        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
     }
     else {
         ui->log->setText("Process Finished.");
@@ -53,24 +54,12 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
     }
 }
 void MainWindow::on_openISO_clicked() {
-    QProcess getUsername;
-    getUsername.start("sh findUsername.sh");
-    getUsername.waitForFinished();
-    QFile file("username.txt");
-    file.open(QIODevice::ReadOnly);
-    QTextStream in(&file);
-    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","ISO (*.iso)");
+    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),QDir::homePath() + "/Downloads","ISO (*.iso)");
     if (filePath != "") osPath = filePath;
     ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_openIMG_clicked() {
-    QProcess getUsername;
-    getUsername.start("sh findUsername.sh");
-    getUsername.waitForFinished();
-    QFile file("username.txt");
-    file.open(QIODevice::ReadOnly);
-    QTextStream in(&file);
-    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),"/Users/" + in.readLine() + "/Downloads","IMG (*.img)");
+    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),QDir::homePath() + "/Downloads","IMG (*.img)");
     if (filePath != "") osPath = filePath;
     ui->pathReadOut->setText(osPath);
 }
@@ -79,12 +68,9 @@ void MainWindow::on_startStop_clicked() {
         close();
         return;
     }
-    if (ui->devID->currentText().split(":")[0] == "ERROR") {
-        ui->plainTextEdit->appendPlainText("Cannot Start. Please See Error Above.");
-        return;
-    }
-    if (ui->devID->currentText() == "No External Devices Found") {
-        ui->plainTextEdit->appendPlainText("Please Put A USB Drive Into The Computer Or Enable The Use Of Internal Drives And Refresh The Device List.");
+    if (ui->devID->currentText().contains("ERROR")) {
+        ui->plainTextEdit->appendPlainText("Please Put A USB Drive Into The Computer And Refresh The Device List.");
+        ui->plainTextEdit->appendPlainText("If You Got An Error Saying Something Is Not Right, Do Not Continue, And Email The Developer.");
         return;
     }
     if (osPath == "") {
@@ -96,6 +82,7 @@ void MainWindow::on_startStop_clicked() {
         msgBox.setText("You have selected an internal device for use.\nTo abort, click cancel in the authorization prompt after closing this message.\nTo continue, just close this message.");
         msgBox.exec();
     }
+
     hasStarted = true;
     ui->log->setText("Starting...");
     ui->startStop->setText("Cancel");
@@ -135,21 +122,19 @@ void MainWindow::on_refreshDevs_clicked() {
     QProcess getDevs;
     getDevs.start("sh findDevs.sh");
     getDevs.waitForFinished();
-    QFile file("connectedDevs.txt");
-    file.open(QIODevice::ReadOnly);
-    QTextStream in(&file);
-    QString allDevs = in.readAll(), currLine = "";
-    file.close();
+    QByteArray output = getDevs.readAll();
+    QString allDevs = QTextStream(&output).readAll();
+    getDevs.close();
     if (allDevs.length() < 3) {
         ui->plainTextEdit->clear();
         ui->plainTextEdit->appendPlainText("\nCould Not Find Any Connected Devices.");
-        ui->plainTextEdit->appendPlainText("Either this application is not in /Applications (or directly in your Documents or Desktop folder) or something is seriously wrong.");
-        ui->plainTextEdit->appendPlainText("Cannot Continue. Please Correct This Problem And Try Again.");
+        ui->plainTextEdit->appendPlainText("Something Is Not Right. Cannot Continue.");
         ui->devID->clear();
         ui->devID->addItem("ERROR: Could Not Find Devices. See Below.");
         return;
     }
     QStringList devs;
+    QString currLine = "";
     for (int i = 0; i < allDevs.length(); ++i) {
         QString c = allDevs.at(i);
         if (c != ":") {
@@ -170,8 +155,11 @@ void MainWindow::on_refreshDevs_clicked() {
             }
         }
     }
-    if (!ui->allowNonExtern->isChecked() && devs.isEmpty()) {
-        devs << "No External Devices Found";
+    if (devs.isEmpty()) {
+        if (ui->allowNonExtern->isChecked())
+            devs << "ERROR: Failed To Read Devices.";
+        else
+            devs << "ERROR: No External Devices Found.";
     }
     ui->devID->clear();
     ui->devID->addItems(devs);
@@ -200,7 +188,7 @@ void MainWindow::on_downloadOS_clicked() {
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     case 2:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
+        if (!QDesktopServices::openUrl(QUrl(QString("http://saimei.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     case 3:
@@ -208,19 +196,15 @@ void MainWindow::on_downloadOS_clicked() {
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     case 4:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://gensho.acc.umu.se/debian-cd/8.6.0/i386/iso-cd/debian-8.6.0-i386-netinst.iso"))))
+        if (!QDesktopServices::openUrl(QUrl(QString("http://saimei.acc.umu.se/debian-cd/8.6.0/i386/iso-cd/debian-8.6.0-i386-netinst.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     }
 }
-void MainWindow::on_allowNonExtern_clicked() {
-    on_refreshDevs_clicked();
-}
+void MainWindow::on_allowNonExtern_clicked() { on_refreshDevs_clicked(); }
 void MainWindow::on_actionSelectISO_triggered() { if(!hasStarted) on_openISO_clicked(); }
 void MainWindow::on_actionSelectIMG_triggered() { if(!hasStarted) on_openIMG_clicked(); }
-void MainWindow::on_actionContact_triggered() {
-    QMessageBox::about(this,"Contact","Email: contact@etcg.pw\nWebsite: http://www.etcg.pw");
-}
+void MainWindow::on_actionContact_triggered() { QMessageBox::about(this,"Contact","Email: contact@etcg.pw\nWebsite: http://www.etcg.pw"); }
 void MainWindow::on_actionCopyright_triggered() {
     QFile copyNotice("../Resources/copyrightNotice.txt"),
           copy      ("../Resources/COPYING"),
