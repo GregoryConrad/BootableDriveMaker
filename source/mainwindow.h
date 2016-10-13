@@ -15,7 +15,7 @@ private:
     Ui::MainWindow *ui;
     bool hasStarted;
     QProcess *process;
-    guiHandler *guihandler;
+    guiHandler guihandler;
     QString osPath;
     QString devIDToInt();
 private slots:

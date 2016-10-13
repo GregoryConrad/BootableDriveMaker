@@ -12,11 +12,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     hasStarted = false;
     process = new QProcess();
     connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(done(int,QProcess::ExitStatus)));
-    guihandler = new guiHandler();
-    connect(guihandler,SIGNAL(setLineLog(QString)),this,SLOT(setLineLog(QString)));
-    connect(guihandler,SIGNAL(setBigLog(QString)),this,SLOT(setBigLog(QString)));
-    connect(guihandler,SIGNAL(autoScroll()),this,SLOT(autoScroll()));
-    connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),guihandler,SLOT(done(int,QProcess::ExitStatus)));
+    connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),&guihandler,SLOT(done(int,QProcess::ExitStatus)));
+    connect(&guihandler,SIGNAL(setLineLog(QString)),this,SLOT(setLineLog(QString)));
+    connect(&guihandler,SIGNAL(setBigLog(QString)),this,SLOT(setBigLog(QString)));
+    connect(&guihandler,SIGNAL(autoScroll()),this,SLOT(autoScroll()));
     osPath = "";
     QProcess removeFiles;
     removeFiles.start("rm devID.txt currStep.txt cmdOut.txt path.txt file.iso file.img.dmg file.img");
@@ -30,16 +29,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
     else {
         QMessageBox msgBox;
-        msgBox.setText("ERROR: Could Not Write To findDevs.sh\nApplication Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        msgBox.setText("ERROR: Could Not Write To findDevs.sh\nThis Application Might Not Be In /Applications?");
         msgBox.exec();
-        ui->plainTextEdit->appendPlainText("ERROR: Could Not Write To findDevs.sh\nApplication Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        ui->plainTextEdit->appendPlainText("ERROR: Could Not Write To findDevs.sh\nThis Application Might Not Be In /Applications?");
         setEnabled(false);
     }
     QStringList itemsToAdd;
-    itemsToAdd << "1. Ubuntu 16.04 (64-Bit)";
-    itemsToAdd << "2. Debian 8.6.0 (64-Bit, Internet Installer)";
-    itemsToAdd << "3. Ubuntu 16.04 (32-Bit)";
-    itemsToAdd << "4. Debian 8.6.0 (32-Bit, Internet Installer)";
+    itemsToAdd << "1. Debian 8.6.0 (Internet Installer)";
+    itemsToAdd << "2. Ubuntu 16.04";
+    itemsToAdd << "3. Lubuntu 16.04";
+    itemsToAdd << "4. Kubuntu 16.04";
+    itemsToAdd << "5. Xubuntu 16.04";
+    itemsToAdd << "6. Ubuntu GNOME 16.04";
     ui->osSelector->addItems(itemsToAdd);
     on_refreshDevs_clicked();
 }
@@ -47,7 +48,6 @@ MainWindow::~MainWindow() {
     delete ui;
     process->kill();
     delete process;
-    delete guihandler;
 }
 void MainWindow::setLineLog(QString str) { ui->log->setText(str); }
 void MainWindow::setBigLog(QString str) {
@@ -58,7 +58,7 @@ void MainWindow::done(int exitCode, QProcess::ExitStatus exitStatus) {
     ui->startStop->setText("Quit");
     if (exitCode != 0 || exitStatus != QProcess::NormalExit) {
         ui->plainTextEdit->appendPlainText("\n\nAn Error Has Occured. Error Code: " + QString::number(exitCode));
-        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        ui->plainTextEdit->appendPlainText("This Application Might Not Be In /Applications?");
     }
     else {
         ui->log->setText("Process Finished.");
@@ -76,6 +76,7 @@ void MainWindow::on_openIMG_clicked() {
     ui->pathReadOut->setText(osPath);
 }
 void MainWindow::on_startStop_clicked() {
+    //Run starting checks
     if (hasStarted) {
         close();
         return;
@@ -94,7 +95,7 @@ void MainWindow::on_startStop_clicked() {
         msgBox.setText("You have selected an internal device for use.\nTo abort, click cancel in the authorization prompt after closing this message.\nTo continue, just close this message.");
         msgBox.exec();
     }
-
+    //Disable GUI
     hasStarted = true;
     ui->log->setText("Starting...");
     ui->startStop->setText("Cancel");
@@ -110,7 +111,6 @@ void MainWindow::on_startStop_clicked() {
     ui->label_2->setEnabled(false);
     ui->label_3->setEnabled(false);
     ui->label_4->setEnabled(false);
-
     //Print osPath to path.txt
     QFile location("path.txt");
     if (location.open(QIODevice::WriteOnly)) {
@@ -120,7 +120,7 @@ void MainWindow::on_startStop_clicked() {
     else {
         ui->log->setText("ERROR While Passing File Path");
         ui->plainTextEdit->appendPlainText("\nAn error has occured while passing the file path to the script.");
-        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        ui->plainTextEdit->appendPlainText("This Application Might Not Be In /Applications?");
         return;
     }
     //Print rdisk device to devID.txt
@@ -132,11 +132,12 @@ void MainWindow::on_startStop_clicked() {
     else {
         ui->log->setText("ERROR While Passing The Device ID");
         ui->plainTextEdit->appendPlainText("\nAn error has occured while passing the Device ID to the script.");
-        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        ui->plainTextEdit->appendPlainText("This Application Might Not Be In /Applications?");
     }
-
+    //Start script
     process->start("osascript", QStringList() << "-e" << "do shell script \"sh run.sh\" with administrator privileges");
-    guihandler->start();
+    //Start guihandler
+    guihandler.start();
 }
 void MainWindow::autoScroll() {
     QTextCursor c = ui->plainTextEdit->textCursor();
@@ -160,45 +161,36 @@ void MainWindow::on_refreshDevs_clicked() {
     }
     QStringList devs;
     QString currLine = "";
-    if (allDevs.contains(":")) {
-        for (int i = 0; i < allDevs.length(); ++i) {
-            QString c = allDevs.at(i);
+    for (int i = 0; i < allDevs.length(); ++i) {
+        QString c = allDevs.at(i);
+        if (c != "\n") {
             if (c != ":") {
-                if (c != "\n") {
-                    currLine += c;
+                currLine += c;
+            }
+        }
+        else {
+            devs.append(currLine);
+            currLine = "";
+        }
+    }
+    if (currLine != "" && currLine != " ") devs.append(currLine);
+    if (allDevs.contains(":")) {
+        if (!ui->allowNonExtern->isChecked()) {
+            for (int i = 0; i < devs.length(); ++i) {
+                if (!devs.at(i).contains("external")) {
+                    devs.removeAt(i);
+                    --i;
                 }
             }
-            else {
-                devs.append(currLine);
-                currLine = "";
-            }
+            if (devs.isEmpty()) devs << "ERROR: No External Devices Found.";
+        }
+        else {
+            if (devs.isEmpty()) devs << "ERROR: Device Parsing Error.";
         }
     }
     else {
-        for (int i = 0; i < allDevs.length(); ++i) {
-            QString c = allDevs.at(i);
-            if (c != "\n") {
-                currLine += c;
-            }
-            else {
-                devs.append(currLine);
-                currLine = "";
-            }
-        }
-    }
-    if (!ui->allowNonExtern->isChecked()) {
-        for (int i = 0; i < devs.length(); ++i) {
-            if (!devs.at(i).contains("external")) {
-                devs.removeAt(i);
-                --i;
-            }
-        }
-    }
-    if (devs.isEmpty()) {
-        if (ui->allowNonExtern->isChecked())
-            devs << "ERROR: Failed To Read Devices.";
-        else
-            devs << "ERROR: No External Devices Found.";
+        ui->allowNonExtern->setEnabled(false);
+        if (devs.isEmpty()) devs << "ERROR: Failed To Read Devices.";
     }
     ui->devID->clear();
     ui->devID->addItems(devs);
@@ -223,19 +215,27 @@ QString MainWindow::devIDToInt() {
 void MainWindow::on_downloadOS_clicked() {
     switch(ui->osSelector->currentText().split(".")[0].toInt()) {
     case 1:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 2:
         if (!QDesktopServices::openUrl(QUrl(QString("http://saimei.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
+    case 2:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-amd64.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
     case 3:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-i386.iso"))))
+        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/lubuntu/releases/xenial/release/lubuntu-16.04.1-desktop-amd64.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     case 4:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://saimei.acc.umu.se/debian-cd/8.6.0/i386/iso-cd/debian-8.6.0-i386-netinst.iso"))))
+        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/kubuntu/releases/16.04.1/release/kubuntu-16.04.1-desktop-amd64.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
+    case 5:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://mirror.us.leaseweb.net/ubuntu-cdimage/xubuntu/releases/16.04/release/xubuntu-16.04-desktop-amd64.iso"))))
+            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
+        break;
+    case 6:
+        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/ubuntu-gnome/releases/xenial/release/ubuntu-gnome-16.04.1-desktop-amd64.iso"))))
             ui->plainTextEdit->appendPlainText("Failed To Open URL.");
         break;
     }
