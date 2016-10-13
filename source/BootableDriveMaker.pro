@@ -21,4 +21,4 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-ICON = BootableDriveMaker.icns
+ICON = icons/BootableDriveMaker.icns

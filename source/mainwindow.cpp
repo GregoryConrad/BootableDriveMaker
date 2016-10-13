@@ -21,6 +21,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QProcess removeFiles;
     removeFiles.start("rm devID.txt currStep.txt cmdOut.txt path.txt file.iso file.img.dmg file.img");
     removeFiles.waitForFinished();
+    QFile findDevs("findDevs.sh");
+    if (findDevs.exists()) findDevs.resize(0);
+    if (findDevs.open(QIODevice::WriteOnly)) {
+        QTextStream out(&findDevs);
+        out << "diskutil list | grep /dev/disk";
+        findDevs.close();
+    }
+    else {
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: Could Not Write To findDevs.sh\nApplication Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        msgBox.exec();
+        ui->plainTextEdit->appendPlainText("ERROR: Could Not Write To findDevs.sh\nApplication Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        setEnabled(false);
+    }
     QStringList itemsToAdd;
     itemsToAdd << "1. Ubuntu 16.04 (64-Bit)";
     itemsToAdd << "2. Debian 8.6.0 (64-Bit, Internet Installer)";
@@ -35,9 +49,7 @@ MainWindow::~MainWindow() {
     delete process;
     delete guihandler;
 }
-void MainWindow::setLineLog(QString str) {
-    ui->log->setText(str);
-}
+void MainWindow::setLineLog(QString str) { ui->log->setText(str); }
 void MainWindow::setBigLog(QString str) {
     ui->plainTextEdit->clear();
     ui->plainTextEdit->appendPlainText(str);
@@ -70,7 +82,7 @@ void MainWindow::on_startStop_clicked() {
     }
     if (ui->devID->currentText().contains("ERROR")) {
         ui->plainTextEdit->appendPlainText("Please Put A USB Drive Into The Computer And Refresh The Device List.");
-        ui->plainTextEdit->appendPlainText("If You Got An Error Saying Something Is Not Right, Do Not Continue, And Email The Developer.");
+        ui->plainTextEdit->appendPlainText("If You Got An Error Saying Something Is Not Right, Do Not Continue, And Contact The Developer.");
         return;
     }
     if (osPath == "") {
@@ -101,14 +113,27 @@ void MainWindow::on_startStop_clicked() {
 
     //Print osPath to path.txt
     QFile location("path.txt");
-    location.open(QIODevice::WriteOnly);
-    QTextStream(&location) << osPath;
-    location.close();
+    if (location.open(QIODevice::WriteOnly)) {
+        QTextStream(&location) << osPath;
+        location.close();
+    }
+    else {
+        ui->log->setText("ERROR While Passing File Path");
+        ui->plainTextEdit->appendPlainText("\nAn error has occured while passing the file path to the script.");
+        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+        return;
+    }
     //Print rdisk device to devID.txt
     QFile dev("devID.txt");
-    dev.open(QIODevice::WriteOnly);
-    QTextStream(&dev) << "/dev/rdisk" << devIDToInt();
-    dev.close();
+    if (dev.open(QIODevice::WriteOnly)) {
+        QTextStream(&dev) << "/dev/rdisk" << devIDToInt();
+        dev.close();
+    }
+    else {
+        ui->log->setText("ERROR While Passing The Device ID");
+        ui->plainTextEdit->appendPlainText("\nAn error has occured while passing the Device ID to the script.");
+        ui->plainTextEdit->appendPlainText("Application Might Not Be In /Applications Or In Your Desktop Or Documents Folder?");
+    }
 
     process->start("osascript", QStringList() << "-e" << "do shell script \"sh run.sh\" with administrator privileges");
     guihandler->start();
@@ -135,16 +160,30 @@ void MainWindow::on_refreshDevs_clicked() {
     }
     QStringList devs;
     QString currLine = "";
-    for (int i = 0; i < allDevs.length(); ++i) {
-        QString c = allDevs.at(i);
-        if (c != ":") {
+    if (allDevs.contains(":")) {
+        for (int i = 0; i < allDevs.length(); ++i) {
+            QString c = allDevs.at(i);
+            if (c != ":") {
+                if (c != "\n") {
+                    currLine += c;
+                }
+            }
+            else {
+                devs.append(currLine);
+                currLine = "";
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < allDevs.length(); ++i) {
+            QString c = allDevs.at(i);
             if (c != "\n") {
                 currLine += c;
             }
-        }
-        else {
-            devs.append(currLine);
-            currLine = "";
+            else {
+                devs.append(currLine);
+                currLine = "";
+            }
         }
     }
     if (!ui->allowNonExtern->isChecked()) {

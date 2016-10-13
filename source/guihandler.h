@@ -4,8 +4,7 @@
 #include <QThread>
 #include <QProcess>
 
-class guiHandler : public QThread
-{
+class guiHandler : public QThread {
     Q_OBJECT
     void run();
     bool hasFinished;

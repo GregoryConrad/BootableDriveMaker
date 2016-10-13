@@ -1,32 +1,30 @@
 #include "guihandler.h"
 #include <QFile>
 #include <QTextStream>
+
 guiHandler::guiHandler() : hasFinished(false) {}
 void guiHandler::run() {
-    QString content;
+    QString content, oldBigLog = "";
     while(!hasFinished) {
         //Update linelog
         QFile linelog("currStep.txt");
         if (linelog.open(QIODevice::ReadOnly)) {
-           content = QTextStream(&linelog).readLine();
-           linelog.close();
-           emit setLineLog(content);
+            emit setLineLog(QTextStream(&linelog).readLine());
+            linelog.close();
         }
         //Update biglog
         QFile biglog("cmdOut.txt");
         if (biglog.open(QIODevice::ReadOnly)) {
-            content = "";
-            QTextStream in(&biglog);
-            while(!in.atEnd()) {
-                content += "\n" + in.readLine();
+            content = QTextStream(&biglog).readAll();
+            if (content != oldBigLog) {
+                oldBigLog = content;
+                emit setBigLog(content);
+                msleep(50);
+                emit autoScroll();
             }
             biglog.close();
-            emit setBigLog(content);
         }
-        emit autoScroll();
         msleep(200);
     }
 }
-void guiHandler::done(int,QProcess::ExitStatus) {
-    hasFinished = true;
-}
+void guiHandler::done(int,QProcess::ExitStatus) { hasFinished = true; }
