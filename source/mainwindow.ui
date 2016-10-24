@@ -102,6 +102,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="openDMG">
+        <property name="text">
+         <string>Select A DMG</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -238,6 +245,7 @@
     </property>
     <addaction name="actionSelectISO"/>
     <addaction name="actionSelectIMG"/>
+    <addaction name="actionSelectDMG"/>
     <addaction name="actionREADME"/>
     <addaction name="actionContact"/>
     <addaction name="actionCopyright"/>
@@ -270,6 +278,11 @@
   <action name="actionREADME">
    <property name="text">
     <string>Open README</string>
+   </property>
+  </action>
+  <action name="actionSelectDMG">
+   <property name="text">
+    <string>Select A DMG</string>
    </property>
   </action>
  </widget>

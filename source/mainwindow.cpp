@@ -75,6 +75,11 @@ void MainWindow::on_openIMG_clicked() {
     if (filePath != "") osPath = filePath;
     ui->pathReadOut->setText(osPath);
 }
+void MainWindow::on_openDMG_clicked() {
+    QString filePath = QFileDialog::getOpenFileName(this,tr("Select An Operating System File"),QDir::homePath() + "/Downloads","DMG (*.dmg)");
+    if (filePath != "") osPath = filePath;
+    ui->pathReadOut->setText(osPath);
+}
 void MainWindow::on_startStop_clicked() {
     //Run starting checks
     if (hasStarted) {
@@ -102,6 +107,7 @@ void MainWindow::on_startStop_clicked() {
     ui->devID->setEnabled(false);
     ui->openISO->setEnabled(false);
     ui->openIMG->setEnabled(false);
+    ui->openDMG->setEnabled(false);
     ui->downloadOS->setEnabled(false);
     ui->osSelector->setEnabled(false);
     ui->allowNonExtern->setEnabled(false);
@@ -243,6 +249,7 @@ void MainWindow::on_downloadOS_clicked() {
 void MainWindow::on_allowNonExtern_clicked() { on_refreshDevs_clicked(); }
 void MainWindow::on_actionSelectISO_triggered() { if(!hasStarted) on_openISO_clicked(); }
 void MainWindow::on_actionSelectIMG_triggered() { if(!hasStarted) on_openIMG_clicked(); }
+void MainWindow::on_actionSelectDMG_triggered() { if(!hasStarted) on_openDMG_clicked(); }
 void MainWindow::on_actionContact_triggered() { QMessageBox::about(this,"Contact","Email: contact@etcg.pw\nWebsite: http://www.etcg.pw"); }
 void MainWindow::on_actionCopyright_triggered() {
     QFile copyNotice("../Resources/copyrightNotice.txt"),

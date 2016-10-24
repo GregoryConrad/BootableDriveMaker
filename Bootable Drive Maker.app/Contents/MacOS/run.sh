@@ -12,7 +12,12 @@ fileExt=${copyFile##*.}
 #############
 echo "Copying..." > currStep.txt
 echo "Copying File To Needed Location..." >> cmdOut.txt 2>&1
-cp "$copyFile" "file.$fileExt"
+if [ "$fileExt" == "iso" ]
+then
+	cp "$copyFile" "file.iso"
+else
+	cp "$copyFile" "file.img.dmg"
+fi
 if [ "$?" != "0" ]
 then
 	exitValue=$?
