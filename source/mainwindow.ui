@@ -22,52 +22,6 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="maximumSize">
-         <size>
-          <width>240</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Download A 64-Bit Operating System:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="osSelector">
-        <property name="minimumSize">
-         <size>
-          <width>300</width>
-          <height>0</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="downloadOS">
-        <property name="minimumSize">
-         <size>
-          <width>110</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>110</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Download</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QLabel" name="label_3">
@@ -246,7 +200,6 @@
     <addaction name="actionSelectISO"/>
     <addaction name="actionSelectIMG"/>
     <addaction name="actionSelectDMG"/>
-    <addaction name="actionREADME"/>
     <addaction name="actionContact"/>
     <addaction name="actionCopyright"/>
    </widget>

@@ -24,7 +24,7 @@ void guiHandler::run() {
             }
             biglog.close();
         }
-        msleep(200);
+        msleep(500);
     }
 }
 void guiHandler::done(int,QProcess::ExitStatus) { hasFinished = true; }

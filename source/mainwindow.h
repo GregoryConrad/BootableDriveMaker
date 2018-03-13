@@ -25,7 +25,6 @@ private slots:
     void on_startStop_clicked();
     void autoScroll();
     void on_refreshDevs_clicked();
-    void on_downloadOS_clicked();
     void on_allowNonExtern_clicked();
     void on_openISO_clicked();
     void on_openIMG_clicked();
@@ -35,7 +34,6 @@ private slots:
     void on_actionSelectDMG_triggered();
     void on_actionContact_triggered();
     void on_actionCopyright_triggered();
-    void on_actionREADME_triggered();
 };
 
 #endif // MAINWINDOW_H

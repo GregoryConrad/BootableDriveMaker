@@ -34,14 +34,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         ui->plainTextEdit->appendPlainText("ERROR: Could Not Write To findDevs.sh\nThis Application Might Not Be In /Applications?");
         setEnabled(false);
     }
-    QStringList itemsToAdd;
-    itemsToAdd << "1. Debian 8.6.0 (Internet Installer)";
-    itemsToAdd << "2. Ubuntu 16.04";
-    itemsToAdd << "3. Lubuntu 16.04";
-    itemsToAdd << "4. Kubuntu 16.04";
-    itemsToAdd << "5. Xubuntu 16.04";
-    itemsToAdd << "6. Ubuntu GNOME 16.04";
-    ui->osSelector->addItems(itemsToAdd);
     on_refreshDevs_clicked();
 }
 MainWindow::~MainWindow() {
@@ -97,7 +89,10 @@ void MainWindow::on_startStop_clicked() {
     }
     if (ui->devID->currentText().contains("internal")) {
         QMessageBox msgBox;
-        msgBox.setText("You have selected an internal device for use.\nTo abort, click cancel in the authorization prompt after closing this message.\nTo continue, just close this message.");
+        msgBox.setText("WARNING!\n"
+                       "You have selected an internal device for use.\n"
+                       "To abort, click cancel in the authorization prompt after closing this message.\n"
+                       "To continue, just close this message.");
         msgBox.exec();
     }
     //Disable GUI
@@ -108,13 +103,10 @@ void MainWindow::on_startStop_clicked() {
     ui->openISO->setEnabled(false);
     ui->openIMG->setEnabled(false);
     ui->openDMG->setEnabled(false);
-    ui->downloadOS->setEnabled(false);
-    ui->osSelector->setEnabled(false);
     ui->allowNonExtern->setEnabled(false);
     ui->refreshDevs->setEnabled(false);
     ui->pathReadOut->setEnabled(false);
     ui->label->setEnabled(false);
-    ui->label_2->setEnabled(false);
     ui->label_3->setEnabled(false);
     ui->label_4->setEnabled(false);
     //Print osPath to path.txt
@@ -170,9 +162,7 @@ void MainWindow::on_refreshDevs_clicked() {
     for (int i = 0; i < allDevs.length(); ++i) {
         QString c = allDevs.at(i);
         if (c != "\n") {
-            if (c != ":") {
-                currLine += c;
-            }
+            if (c != ":") currLine += c;
         }
         else {
             devs.append(currLine);
@@ -190,9 +180,7 @@ void MainWindow::on_refreshDevs_clicked() {
             }
             if (devs.isEmpty()) devs << "ERROR: No External Devices Found.";
         }
-        else {
-            if (devs.isEmpty()) devs << "ERROR: Device Parsing Error.";
-        }
+        else if (devs.isEmpty()) devs << "ERROR: Device Parsing Error.";
     }
     else {
         ui->allowNonExtern->setEnabled(false);
@@ -205,46 +193,9 @@ QString MainWindow::devIDToInt() {
     QString newStr = "";
     for (int i = 0; i < ui->devID->currentText().length(); ++i) {
         QString curr = ui->devID->currentText().at(i);
-        if (curr == "0") newStr += "0";
-        else if (curr == "1") newStr += curr;
-        else if (curr == "2") newStr += curr;
-        else if (curr == "3") newStr += curr;
-        else if (curr == "4") newStr += curr;
-        else if (curr == "5") newStr += curr;
-        else if (curr == "6") newStr += curr;
-        else if (curr == "7") newStr += curr;
-        else if (curr == "8") newStr += curr;
-        else if (curr == "9") newStr += curr;
+        if (curr >= "0" && curr <= "9") newStr += curr;
     }
     return newStr;
-}
-void MainWindow::on_downloadOS_clicked() {
-    switch(ui->osSelector->currentText().split(".")[0].toInt()) {
-    case 1:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://saimei.acc.umu.se/debian-cd/8.6.0/amd64/iso-cd/debian-8.6.0-amd64-netinst.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 2:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://mirrors.mit.edu/ubuntu-releases/16.04/ubuntu-16.04-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 3:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/lubuntu/releases/xenial/release/lubuntu-16.04.1-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 4:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/kubuntu/releases/16.04.1/release/kubuntu-16.04.1-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 5:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://mirror.us.leaseweb.net/ubuntu-cdimage/xubuntu/releases/16.04/release/xubuntu-16.04-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    case 6:
-        if (!QDesktopServices::openUrl(QUrl(QString("http://cdimage.ubuntu.com/ubuntu-gnome/releases/xenial/release/ubuntu-gnome-16.04.1-desktop-amd64.iso"))))
-            ui->plainTextEdit->appendPlainText("Failed To Open URL.");
-        break;
-    }
 }
 void MainWindow::on_allowNonExtern_clicked() { on_refreshDevs_clicked(); }
 void MainWindow::on_actionSelectISO_triggered() { if(!hasStarted) on_openISO_clicked(); }
@@ -253,7 +204,7 @@ void MainWindow::on_actionSelectDMG_triggered() { if(!hasStarted) on_openDMG_cli
 void MainWindow::on_actionContact_triggered() { QMessageBox::about(this,"Contact","Email: contact@etcg.pw\nWebsite: http://www.etcg.pw"); }
 void MainWindow::on_actionCopyright_triggered() {
     QFile copyNotice("../Resources/copyrightNotice.txt"),
-          copy      ("../Resources/COPYING"),
+          copy("../Resources/COPYING"),
           copyLesser("../Resources/COPYING.LESSER");
     if (copyNotice.open(QIODevice::ReadOnly) && copy.open(QIODevice::ReadOnly)
         && copyLesser.open(QIODevice::ReadOnly)) {
@@ -302,28 +253,4 @@ void MainWindow::on_actionCopyright_triggered() {
         delete dialog;
     }
     else QMessageBox::about(this,"Failed To Open","Failed To Open One Or More Copyright Files.");
-}
-void MainWindow::on_actionREADME_triggered() {
-    QFile README("../Resources/README.md");
-    if (README.open(QIODevice::ReadOnly)) {
-        QTextStream in(&README);
-        //Make dialog
-        QDialog dialog;
-        //Make textHolder for dialog
-        QPlainTextEdit textHolder;
-        textHolder.appendPlainText(in.readAll());
-        textHolder.setReadOnly(true);
-        QTextCursor cursor = textHolder.textCursor();
-        cursor.movePosition(QTextCursor::Start);
-        textHolder.setTextCursor(cursor);
-        //Make textHolder take up all of dialog
-        QVBoxLayout layout;
-        layout.addWidget(&textHolder);
-        //Setup dialog
-        dialog.setLayout(&layout);
-        dialog.setFixedSize(500,500);
-        dialog.setWindowTitle("README");
-        dialog.exec();
-    }
-    else QMessageBox::about(this,"Failed To Open README","Failed To Open README.");
 }
