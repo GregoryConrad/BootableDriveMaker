@@ -4,7 +4,7 @@
 Using an intuitive simple-to-use GUI, Bootable Drive Maker provides a seamless way to create a bootable USB drive in Mac OS X.
 
 # Copyright
-Copyright 2016 ETCG
+Copyright 2018 Gregory Conrad
 
 This entire project (and the libraries it uses) are licensed under the LGPL. Please read COPYING and COPYING.LESSER for your rights.
 
@@ -23,12 +23,12 @@ Congrats! Your drive should have been created.
 
 If you got an error message, please read the output, and if you can't correct the problem on your own, send me a message with the contact info below.
 
-# More Projects By ETCG
+# More Projects By Me
 To see more of my projects, go to:
 
 My Website: http://www.etcg.pw
 
-My Github Account: https://github.com/etcg
+My Github Account: https://github.com/GregoryConrad
 
 # Contact
 For any comments, questions, or concerns:
